@@ -17,12 +17,38 @@ def convert_tidradio_to_dm32(input_file, output_file):
         "Scramble","RX Squelch Mode","Signaling Type","PTT ID","VOX Function","PTT ID Display"
     ]
 
-    with open(input_file, newline='') as infile, open(output_file, 'w', newline='') as outfile:
+    # If the output exists and has content, append; otherwise create and write header.
+    output_exists = os.path.isfile(output_file)
+    write_header = True
+    if output_exists:
+        try:
+            with open(output_file, newline='') as of:
+                existing_header = next(csv.reader(of), None)
+                if existing_header:
+                    write_header = False
+                    if existing_header != dm32_headers:
+                        print(f"Warning: existing header in '{output_file}' differs from expected DM32 headers.", file=sys.stderr)
+        except Exception as e:
+            print(f"Warning reading existing output file header: {e}", file=sys.stderr)
+
+    # If appending to an existing file, continue numbering after existing rows
+    start_index = 1
+    if output_exists and not write_header:
+        try:
+            with open(output_file, newline='') as of:
+                existing_reader = csv.reader(of)
+                next(existing_reader, None)
+                start_index = sum(1 for _ in existing_reader) + 1
+        except Exception:
+            start_index = 1
+
+    with open(input_file, newline='') as infile, open(output_file, 'a', newline='') as outfile:
         reader = csv.DictReader(infile)
         writer = csv.DictWriter(outfile, fieldnames=dm32_headers)
-        writer.writeheader()
+        if write_header:
+            writer.writeheader()
 
-        for i, row in enumerate(reader, start=1):
+        for i, row in enumerate(reader, start=start_index):
             rx_freq = float(row["Frequency"])
             duplex = row["Duplex"].strip()
             offset = float(row["Offset"]) if row["Offset"] else 0.0
