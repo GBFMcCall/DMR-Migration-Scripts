@@ -1,3 +1,7 @@
+## EXAMPLE USE
+## python CHIRPtoDB32channels.py "C:\Users\grant\Downloads\h8.csv" "C:\Users\grant\Downloads\xx.csv"
+## if the second file doesn't exist, it will create it. If it does exist, it will append to it.
+
 import csv
 import os
 import argparse
